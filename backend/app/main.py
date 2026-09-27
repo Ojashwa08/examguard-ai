@@ -1,42 +1,31 @@
 """
-Database Connection & Session Management Module.
-Configures SQLAlchemy engine, session maker, and standard request session lifecycle dependencies.
+ExamGuard AI - FastAPI Application Entry Point.
 """
 
-from typing import Generator
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from fastapi import FastAPI
 
-from app.config import settings
+from api import api_router
 
-# Configure SQLAlchemy Engine with connection pooling
-engine = create_engine(
-    settings.DATABASE_URL,
-    pool_size=settings.DB_POOL_SIZE,
-    max_overflow=settings.DB_MAX_OVERFLOW,
-    pool_pre_ping=True,  # Detect and recover from dropped connections automatically
-    echo=settings.DEBUG,
+app = FastAPI(
+    title="ExamGuard AI",
+    description="Secure AI-powered examination and proctoring platform",
+    version="1.0.0",
 )
 
-# Thread-local database session factory
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
-
-# Declarative base class for SQLAlchemy ORM models
-Base = declarative_base()
+# Register all API v1 routes
+app.include_router(api_router)
 
 
-def get_db() -> Generator[Session, None, None]:
-    """
-    FastAPI dependency that provides a transactional database session scope.
-    Automatically closes the session after request execution completes.
-    """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@app.get("/")
+def root():
+    return {
+        "message": "ExamGuard AI backend is running",
+        "status": "success",
+    }
+
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "healthy"
+    }
